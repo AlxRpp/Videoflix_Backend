@@ -3,12 +3,14 @@ click==8.4.2
 croniter==6.2.3
 Django==6.0.7
 django-redis==7.0.0
-django-rq==3.2.1
+django-rq==4.1.1
 djangorestframework==3.17.1
+djangorestframework_simplejwt==5.5.1
 dotenv==0.9.9
 gunicorn==26.0.0
 packaging==26.2
 psycopg2-binary==2.9.12
+PyJWT==2.13.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
 redis==8.0.1
