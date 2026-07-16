@@ -12,7 +12,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
-from .serializers import RegisterUserSerializer, CustomLoginSerializer
+from .serializers import RegisterUserSerializer, CustomLoginSerializer, ResetPasswordSerializer, ConfirmNewPasswordSerializer
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
@@ -66,8 +66,8 @@ class ActivateUserView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, uidb64, token):
-        user_pk = force_str(urlsafe_base64_decode(uidb64))
         try:
+            user_pk = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=user_pk)
         except (User.DoesNotExist, ValueError):
             return Response({"error": "user not found"}, status=status.HTTP_400_BAD_REQUEST)
@@ -147,3 +147,95 @@ class UserLogoutAndDeleteCookies(APIView):
         response.delete_cookie(key="access_token")
 
         return response
+
+
+class CookieTokenRefreshView(TokenRefreshView):
+    def post(self, request, *args, **kwargs):
+        refresh = request.COOKIES.get("refresh_token")
+
+        if refresh is None:
+            return Response({"detail": "Token is missing"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data={"refresh": refresh})
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError:
+            return Response({"message": "Token is unvalid"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        accessToken = serializer.validated_data.get("access")
+
+        response = Response({
+            "detail": "Token refreshed",
+            "access": accessToken
+        })
+
+        response.set_cookie(
+            key="access_token",
+            value=accessToken,
+            httponly=True,
+            secure=True,
+            samesite="Lax"
+        )
+        return response
+
+
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            user = User.objects.get(email=request.data.get('email'))
+            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            token = account_activation_token.make_token(user)
+            activation_link = request.build_absolute_uri(
+                f"/api/password_confirm/{uidb64}/{token}/"
+            )
+
+            send_mail(
+                "Reset your Password for your ViedoFlix Account",
+                f"Please click on this Link: {activation_link}",
+                None,
+                [user.email],
+                fail_silently=False,
+            )
+
+            return Response(
+                {
+                    "detail": "An email has been sent to reset your password."
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            serializer.errors, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class ConfirmNewPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, uidb64, token):
+        serializer = ConfirmNewPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                user_pk = force_str(urlsafe_base64_decode(uidb64))
+                user = User.objects.get(pk=user_pk)
+            except (User.DoesNotExist, ValueError):
+                return Response({"error": "user not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+            check_token = account_activation_token.check_token(user, token)
+
+            if check_token:
+                serializer.save(user=user)
+                return Response({
+                    "detail": "Your Password has been successfully reset."
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            serializer.errors, status=status.HTTP_400_BAD_REQUEST
+        )
