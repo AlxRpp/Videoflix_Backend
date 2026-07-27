@@ -24,6 +24,6 @@ class Video(models.Model):
         return f"{self.title} | {self.category} | {self.created_at}"
 
     class Meta:
-        ordering = ['id']
+        ordering = ['-created_at']
         verbose_name = 'Video'
         verbose_name_plural = 'Videos'

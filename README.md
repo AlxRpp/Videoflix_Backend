@@ -104,10 +104,18 @@ thumbnail and all resolutions are generated in the background.
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_DB` / `REDIS_LOCATION` | Redis connection |
 | `EMAIL_HOST` / `EMAIL_PORT` / `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` | SMTP settings |
 | `EMAIL_USE_TLS` / `EMAIL_USE_SSL` / `DEFAULT_FROM_EMAIL` | Email options |
-| `EMAIL_BACKEND` | Set to `django.core.mail.backends.console.EmailBackend` to print activation/reset emails to the console instead of sending them |
+| `EMAIL_BACKEND` | Controls how emails are sent (see the note below) |
 
-> For local testing the console email backend is the easiest choice – the
-> activation and reset links show up directly in the container logs.
+### Email sending
+
+By **default** the `EMAIL_BACKEND` line is present in your `.env`, so all
+activation and password-reset emails are **printed to the container logs**
+instead of being sent – ideal for local testing, the links show up right in the
+terminal.
+
+To send **real emails over SMTP**, simply **comment out the `EMAIL_BACKEND`
+line** in your `.env` and fill in the `EMAIL_*` values above. Django then falls
+back to the SMTP backend automatically.
 
 ---
 
