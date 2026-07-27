@@ -108,14 +108,22 @@ thumbnail and all resolutions are generated in the background.
 
 ### Email sending
 
-By **default** the `EMAIL_BACKEND` line is present in your `.env`, so all
-activation and password-reset emails are **printed to the container logs**
-instead of being sent – ideal for local testing, the links show up right in the
-terminal.
+By **default** emails are sent over **SMTP**, using the `EMAIL_*` values above –
+the project is production-ready out of the box.
 
-To send **real emails over SMTP**, simply **comment out the `EMAIL_BACKEND`
-line** in your `.env` and fill in the `EMAIL_*` values above. Django then falls
-back to the SMTP backend automatically.
+For **local testing** you usually don't have a real mail server. In that case,
+**uncomment the `EMAIL_BACKEND` line** in your `.env`:
+
+```
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+```
+
+Django then prints the activation and password-reset **links straight to the
+container logs** instead of sending them. You can watch them with:
+
+```bash
+docker compose logs -f web
+```
 
 ---
 
