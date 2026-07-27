@@ -7,8 +7,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-SECRET_KEY = os.getenv(
-    'SECRET_KEY', default='django-insecure-s97^mg*lifm-q&09-$^v$u74hd4q1i1r^6tazj-zp^qetfq2ik')
+SECRET_KEY = os.getenv('SECRET_KEY', default='change-this-to-a-secret-key')
 
 DEBUG = os.getenv('DEBUG')
 
@@ -22,6 +21,8 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+FRONTEND_URL = os.getenv('FRONTEND_URL', default='http://127.0.0.1:5500')
 
 
 EMAIL_HOST = os.getenv('EMAIL_HOST')

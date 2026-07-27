@@ -61,6 +61,7 @@ def thumbnail(pk, source):
     base = os.path.splitext(os.path.basename(source))[0]
     thumb_path = os.path.join(
         settings.MEDIA_ROOT, "thumbnails", base + "_thumb.jpg")
+    os.makedirs(os.path.dirname(thumb_path), exist_ok=True)
     cmd = [
         'ffmpeg',
         '-i', source,

@@ -67,7 +67,16 @@ cd Videoflix_Backend
 cp .env.example .env
 ```
 
-Then open `.env` and fill in the values (see the table below).
+Then open `.env` and fill in the values (see the table below). In particular,
+**generate your own `SECRET_KEY`**, for example:
+
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(50))"
+```
+
+and paste the result into the `SECRET_KEY` line. The project still runs with the
+placeholder from `.env.example`, but for a real deployment you should use your
+own key.
 
 **3. Build and start everything**
 
