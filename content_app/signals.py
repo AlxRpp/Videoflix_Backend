@@ -2,7 +2,6 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete
 from .models import Video
 from .tasks import convert480p, convert720p, convert1080p, thumbnail, convert_hls
-from django_rq import enqueue
 import django_rq
 import os
 from django.conf import settings
@@ -10,7 +9,6 @@ from django.conf import settings
 
 @receiver(post_save, sender=Video)
 def video_post_save(sender, instance, created, **kwargs):
-    print("Video wurde gespeichert")
     if created:
         video = instance.video.path
         base = os.path.splitext(video)[0]
@@ -46,4 +44,3 @@ def video_post_delete(sender, instance, **kwargs):
             os.remove(video1080)
         if os.path.isfile(thumb_path):
             os.remove(thumb_path)
-        print('File deleted')

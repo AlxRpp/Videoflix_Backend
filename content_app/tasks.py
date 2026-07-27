@@ -17,7 +17,7 @@ def convert480p(source):
         '-strict', '-2',
         new_file,
     ]
-    run = subprocess.run(cmd, capture_output=True)
+    subprocess.run(cmd, capture_output=True)
 
 
 def convert720p(source):
@@ -33,7 +33,7 @@ def convert720p(source):
         '-strict', '-2',
         new_file,
     ]
-    run = subprocess.run(cmd, capture_output=True)
+    subprocess.run(cmd, capture_output=True)
 
 
 def convert1080p(source):
@@ -49,7 +49,7 @@ def convert1080p(source):
         '-strict', '-2',
         new_file,
     ]
-    run = subprocess.run(cmd, capture_output=True)
+    subprocess.run(cmd, capture_output=True)
 
 
 def thumbnail(pk, source):
@@ -64,7 +64,7 @@ def thumbnail(pk, source):
         '-vframes',
         '1',
         thumb_path]
-    run = subprocess.run(cmd, capture_output=True)
+    subprocess.run(cmd, capture_output=True)
     rel = os.path.relpath(thumb_path, settings.MEDIA_ROOT)
     Video.objects.filter(pk=pk).update(thumbnail=rel)
 
@@ -83,4 +83,4 @@ def convert_hls(source, movie_id, resolution):
         '-f', 'hls',
         os.path.join(out_dir, 'index.m3u8'),
     ]
-    run = subprocess.run(cmd, capture_output=True)
+    subprocess.run(cmd, capture_output=True)

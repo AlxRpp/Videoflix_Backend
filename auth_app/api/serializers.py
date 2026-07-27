@@ -105,11 +105,6 @@ class ConfirmNewPasswordSerializer(serializers.ModelSerializer):
         model = User
         fields = ['new_password', 'confirm_password']
 
-    # def __init__(self, **kwargs):
-    #     super().__init__(**kwargs)
-    #     if "username" in self.fields:
-    #         self.fields.pop("username")
-
     def validate_confirm_password(self, value):
         password = self.initial_data.get('new_password')
         if password and value and password != value:
