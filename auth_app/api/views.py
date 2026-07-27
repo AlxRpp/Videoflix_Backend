@@ -12,7 +12,6 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
-from django.conf import settings
 from .serializers import RegisterUserSerializer, CustomLoginSerializer, ResetPasswordSerializer, ConfirmNewPasswordSerializer
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -39,14 +38,13 @@ class RegisterUserView(APIView):
             user = serializer.save()
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = (
-                f"{settings.FRONTEND_URL}/pages/auth/activate.html"
-                f"?uid={uidb64}&token={token}"
+            activation_link = request.build_absolute_uri(
+                f"/api/activate/{uidb64}/{token}/"
             )
 
             send_mail(
                 "Activate your ViedoFlix Account",
-                f"Please click on this link to activate your account:\n\n{activation_link}",
+                f"Please click on this Link: {activation_link}",
                 None,
                 [user.email],
                 fail_silently=False,
@@ -200,14 +198,13 @@ class ResetPasswordView(APIView):
             user = User.objects.get(email=request.data.get('email'))
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            reset_link = (
-                f"{settings.FRONTEND_URL}/pages/auth/confirm_password.html"
-                f"?uid={uidb64}&token={token}"
+            activation_link = request.build_absolute_uri(
+                f"/api/password_confirm/{uidb64}/{token}/"
             )
 
             send_mail(
                 "Reset your Password for your ViedoFlix Account",
-                f"Please click on this link to reset your password:\n\n{reset_link}",
+                f"Please click on this Link: {activation_link}",
                 None,
                 [user.email],
                 fail_silently=False,
