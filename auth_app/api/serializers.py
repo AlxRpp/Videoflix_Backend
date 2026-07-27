@@ -20,17 +20,20 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         }
 
     def __init__(self, **kwargs):
+        """Drop the username field."""
         super().__init__(**kwargs)
         if "username" in self.fields:
             self.fields.pop("username")
 
     def validate_email(self, value):
+        """Reject an email that already belongs to an account."""
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError(
                 {'error': 'Email already exists'})
         return value
 
     def validate_confirmed_password(self, value):
+        """Make sure both password fields are the same."""
         password = self.initial_data.get('password')
         if password and value and password != value:
             raise serializers.ValidationError(
@@ -38,6 +41,7 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         return value
 
     def save(self):
+        """Create the user as inactive and reuse the email as username."""
         pw = self.validated_data.get('password')
         set_username = self.validated_data.get('email')
         account = User(
@@ -53,11 +57,13 @@ class CustomLoginSerializer(TokenObtainPairSerializer):
     password = serializers.CharField(write_only=True)
 
     def __init__(self, *args, **kwargs):
+        """Drop the username field."""
         super().__init__(*args, **kwargs)
         if 'username' in self.fields:
             self.fields.pop('username')
 
     def validate(self, attrs):
+        """Check email and password, then let SimpleJWT build the tokens."""
         email = attrs.get('email')
         password = attrs.get('password')
 
@@ -86,11 +92,13 @@ class ResetPasswordSerializer(serializers.ModelSerializer):
         }
 
     def __init__(self, **kwargs):
+        """Drop the username field."""
         super().__init__(**kwargs)
         if "username" in self.fields:
             self.fields.pop("username")
 
     def validate_email(self, value):
+        """Only continue if an account with this email actually exists."""
         if not User.objects.filter(email=value).exists():
             raise serializers.ValidationError(
                 {'error': 'Please enter a valid Email'})
@@ -106,6 +114,7 @@ class ConfirmNewPasswordSerializer(serializers.ModelSerializer):
         fields = ['new_password', 'confirm_password']
 
     def validate_confirm_password(self, value):
+        """Make sure the new password and its confirmation match."""
         password = self.initial_data.get('new_password')
         if password and value and password != value:
             raise serializers.ValidationError(
@@ -113,6 +122,7 @@ class ConfirmNewPasswordSerializer(serializers.ModelSerializer):
         return value
 
     def save(self, **kwargs):
+        """Set the new password on the given user."""
         user = kwargs.get('user')
         pw = self.validated_data.get('new_password')
         user.set_password(pw)

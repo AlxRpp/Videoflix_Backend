@@ -18,6 +18,7 @@ class HLSPlayListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, movie_id, resolution):
+        """Return the .m3u8 playlist for a video in the chosen resolution."""
         path = os.path.join(settings.MEDIA_ROOT, "hls", str(
             movie_id), resolution, "index.m3u8")
         if not os.path.isfile(path):
@@ -29,6 +30,7 @@ class HLSSegmentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, movie_id, resolution, segment):
+        """Return a single .ts segment file for a video and resolution."""
         path = os.path.join(settings.MEDIA_ROOT, "hls",
                             str(movie_id), resolution, segment)
         if not os.path.isfile(path):

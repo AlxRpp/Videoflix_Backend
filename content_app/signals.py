@@ -9,6 +9,8 @@ from django.conf import settings
 
 @receiver(post_save, sender=Video)
 def video_post_save(sender, instance, created, **kwargs):
+    """On a new upload, queue the thumbnail plus the three resolutions and
+    their HLS conversion as background jobs."""
     if created:
         video = instance.video.path
         base = os.path.splitext(video)[0]
@@ -24,6 +26,8 @@ def video_post_save(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=Video)
 def video_post_delete(sender, instance, **kwargs):
+    """Clean up the files of a deleted video: the original, the three
+    converted resolutions and the thumbnail."""
     video = instance.video.path
     base = os.path.splitext(os.path.basename(video))[0]
     thumb_path = os.path.join(

@@ -19,6 +19,8 @@ User = get_user_model()
 
 class AccountActivationTokenGenerator(PasswordResetTokenGenerator):
     def _make_hash_value(self, user, timestamp):
+        """Include is_active in the hash — the activation token stops working
+        once the account is active."""
         return f"{user.pk}{timestamp}{user.is_active}"
 
 
@@ -29,6 +31,7 @@ class RegisterUserView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Create the user and send them an activation link by email."""
         serializer = RegisterUserSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -66,6 +69,7 @@ class ActivateUserView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, uidb64, token):
+        """Activate the account if the token from the email is valid."""
         try:
             user_pk = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=user_pk)
@@ -89,6 +93,7 @@ class LoginAndSetCookiesView(TokenObtainPairView):
     serializer_class = CustomLoginSerializer
 
     def post(self, request, *args, **kwargs):
+        """Log the user in and store the JWT tokens in httpOnly cookies."""
         self.response = super().post(request, *args, **kwargs)
         user = User.objects.get(email=request.data.get('email'))
         access_token = self.response.data.get('access')
@@ -129,6 +134,7 @@ class UserLogoutAndDeleteCookies(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        """Blacklist the refresh token and delete the auth cookies."""
         refresh_token = request.COOKIES.get('refresh_token')
         if not refresh_token:
             return Response({"error": "No refreshtoken in the cookies"
@@ -151,6 +157,7 @@ class UserLogoutAndDeleteCookies(APIView):
 
 class CookieTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
+        """Hand out a new access token using the refresh token cookie."""
         refresh = request.COOKIES.get("refresh_token")
 
         if refresh is None:
@@ -184,6 +191,7 @@ class ResetPasswordView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Send a password-reset link to the given email address."""
         serializer = ResetPasswordSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -218,6 +226,7 @@ class ConfirmNewPasswordView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, uidb64, token):
+        """Set the new password once the reset token checks out."""
         serializer = ConfirmNewPasswordSerializer(data=request.data)
         if serializer.is_valid():
             try:
