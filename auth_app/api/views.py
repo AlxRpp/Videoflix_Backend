@@ -1,6 +1,5 @@
-from email.message import MIMEPart
 from django.template.loader import render_to_string
-from django.core.mail import send_mail, EmailMultiAlternatives
+from django.core.mail import send_mail
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -50,23 +49,14 @@ class RegisterUserView(APIView):
                 "activation_link": activation_link,
             })
 
-            email = EmailMultiAlternatives(
+            send_mail(
                 "Confirm your email",
                 f"Please click on this link to activate your account:\n\n{activation_link}",
                 None,
                 [user.email],
+                fail_silently=False,
+                html_message=html,
             )
-            email.attach_alternative(html, "text/html")
-
-            logo_path = settings.BASE_DIR / "auth_app" / "static" / "img" / "Logo.png"
-            logo = MIMEPart()
-            logo.set_content(
-                logo_path.read_bytes(),
-                maintype="image", subtype="png",
-                cid="<logo>", disposition="inline", filename="Logo.png",
-            )
-            email.attach(logo)
-            email.send()
 
             return Response(
                 {"user":
@@ -221,12 +211,18 @@ class ResetPasswordView(APIView):
                 f"?uid={uidb64}&token={token}"
             )
 
+            html = render_to_string("emails/password_reset.html", {
+                "user": user,
+                "reset_link": reset_link,
+            })
+
             send_mail(
-                "Reset your Password for your VideoFlix Account",
-                f"Please click on this Link: {reset_link}",
+                "Reset your Password",
+                f"Please click on this link to reset your password:\n\n{reset_link}",
                 None,
                 [user.email],
                 fail_silently=False,
+                html_message=html,
             )
 
             return Response(
