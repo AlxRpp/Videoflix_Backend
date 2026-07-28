@@ -1,3 +1,6 @@
+from email.message import MIMEPart
+from django.template.loader import render_to_string
+from django.core.mail import send_mail, EmailMultiAlternatives
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -11,9 +14,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.core.mail import send_mail
 from .serializers import RegisterUserSerializer, CustomLoginSerializer, ResetPasswordSerializer, ConfirmNewPasswordSerializer
 from django.contrib.auth import get_user_model
+from django.conf import settings
 User = get_user_model()
 
 
@@ -38,17 +41,32 @@ class RegisterUserView(APIView):
             user = serializer.save()
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = request.build_absolute_uri(
-                f"/api/activate/{uidb64}/{token}/"
+            activation_link = (
+                f"{settings.FRONTEND_URL}/pages/auth/activate.html"
+                f"?uid={uidb64}&token={token}"
             )
+            html = render_to_string("emails/activation.html", {
+                "user": user,
+                "activation_link": activation_link,
+            })
 
-            send_mail(
-                "Activate your ViedoFlix Account",
-                f"Please click on this Link: {activation_link}",
+            email = EmailMultiAlternatives(
+                "Confirm your email",
+                f"Please click on this link to activate your account:\n\n{activation_link}",
                 None,
                 [user.email],
-                fail_silently=False,
             )
+            email.attach_alternative(html, "text/html")
+
+            logo_path = settings.BASE_DIR / "auth_app" / "static" / "img" / "Logo.png"
+            logo = MIMEPart()
+            logo.set_content(
+                logo_path.read_bytes(),
+                maintype="image", subtype="png",
+                cid="<logo>", disposition="inline", filename="Logo.png",
+            )
+            email.attach(logo)
+            email.send()
 
             return Response(
                 {"user":
@@ -198,13 +216,14 @@ class ResetPasswordView(APIView):
             user = User.objects.get(email=request.data.get('email'))
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
             token = account_activation_token.make_token(user)
-            activation_link = request.build_absolute_uri(
-                f"/api/password_confirm/{uidb64}/{token}/"
+            reset_link = (
+                f"{settings.FRONTEND_URL}/pages/auth/confirm_password.html"
+                f"?uid={uidb64}&token={token}"
             )
 
             send_mail(
-                "Reset your Password for your ViedoFlix Account",
-                f"Please click on this Link: {activation_link}",
+                "Reset your Password for your VideoFlix Account",
+                f"Please click on this Link: {reset_link}",
                 None,
                 [user.email],
                 fail_silently=False,
